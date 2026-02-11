@@ -51,7 +51,6 @@ const statusConfig: Record<
   },
 };
 
-// Removed 'cancelled' from visible statuses
 const allStatuses: OrderStatus[] = ['pending', 'preparing', 'shipped', 'delivered'];
 
 export function AdminPage() {
@@ -63,7 +62,6 @@ export function AdminPage() {
   const previousOrdersCount = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Settings State
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
     minOrderAmount: 0,
     isStoreBusy: false,
@@ -71,7 +69,6 @@ export function AdminPage() {
     isClosed: false
   });
 
-  // Menu Management States
   const [products, setProducts] = useState<MenuItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -86,7 +83,6 @@ export function AdminPage() {
     image: ''
   });
 
-  // Safe subscription to orders
   useEffect(() => {
     try {
       subscribeToAllOrders();
@@ -95,7 +91,6 @@ export function AdminPage() {
     }
   }, [subscribeToAllOrders]);
 
-  // Safe subscription to products
   useEffect(() => {
     try {
       const unsubscribe = subscribeToProducts((fetchedProducts) => {
@@ -110,7 +105,6 @@ export function AdminPage() {
     }
   }, []);
 
-  // Subscribe to Settings
   useEffect(() => {
     const unsubscribe = subscribeToSettings((settings) => {
       setStoreSettings(settings);
@@ -118,13 +112,12 @@ export function AdminPage() {
     return () => unsubscribe();
   }, []);
 
-  // Safe sound effect
   useEffect(() => {
     const safeOrders = Array.isArray(orders) ? orders : [];
     if (safeOrders.length > previousOrdersCount.current && soundEnabled) {
       try {
         if (audioRef.current) {
-          audioRef.current.play().catch((e) => console.log("Audio play failed (user interaction needed)", e));
+          audioRef.current.play().catch((e) => console.log("Audio play failed", e));
         }
       } catch (e) {
         console.error("Audio error", e);
@@ -134,8 +127,6 @@ export function AdminPage() {
   }, [orders?.length, soundEnabled]);
 
   const safeOrders = Array.isArray(orders) ? orders : [];
-  
-  // Filter out cancelled orders from the main view completely
   const activeOrders = safeOrders.filter(order => order?.status !== 'cancelled');
   
   const filteredOrders =
@@ -157,10 +148,9 @@ export function AdminPage() {
     preparing: activeOrders.filter((o) => o?.status === 'preparing').length,
     shipped: activeOrders.filter((o) => o?.status === 'shipped').length,
     delivered: activeOrders.filter((o) => o?.status === 'delivered').length,
-    cancelled: 0, // Hidden
+    cancelled: 0,
   };
 
-  // Menu Management Functions (kept same logic but wrapped in try-catch where appropriate)
   const handleInitializeMenu = async () => {
     setIsInitializing(true);
     try {
@@ -324,7 +314,7 @@ export function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-900 to-black pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-900 to-black pb-20 overflow-x-hidden w-full max-w-[100vw]">
       <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -360,7 +350,7 @@ export function AdminPage() {
           </div>
         </div>
 
-        {/* Tabs - Scrollable on mobile */}
+        {/* Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveTab('orders')}
@@ -402,10 +392,9 @@ export function AdminPage() {
           </button>
         </div>
 
-        {/* Orders Content */}
+        {/* Content */}
         {activeTab === 'orders' && (
           <>
-            {/* Stats Grid - Scrollable on mobile */}
             <div className="flex gap-3 mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-6 sm:overflow-visible">
                <button
                 onClick={() => setFilterStatus('all')}
@@ -441,7 +430,6 @@ export function AdminPage() {
               })}
             </div>
 
-            {/* Orders List */}
             <div className="space-y-4">
               {sortedOrders.length === 0 ? (
                 <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
@@ -453,15 +441,13 @@ export function AdminPage() {
                 </div>
               ) : (
                 sortedOrders.map((order) => {
-                  if (!order || !order.id) return null; // Safe check
+                  if (!order || !order.id) return null;
                   
                   const status = order.status || 'pending';
                   const config = statusConfig[status] || statusConfig.pending;
                   const Icon = config.icon;
                   const isCancelled = status === 'cancelled';
                   const items = Array.isArray(order.items) ? order.items : [];
-                  
-                  // Calculate safely
                   const safeTotal = order.total || 0;
                   const safeDate = order.createdAt ? new Date(order.createdAt).toLocaleString('ar-SA') : '---';
 
@@ -474,16 +460,13 @@ export function AdminPage() {
                       }`}
                     >
                       <div className="p-4 flex flex-col md:flex-row gap-6">
-                         {/* Status Icon Column */}
                          <div className="flex-shrink-0">
                             <div className={`p-3 rounded-xl ${config.bgColor}`}>
                               <Icon className={`w-8 h-8 ${config.color}`} />
                             </div>
                          </div>
 
-                         {/* Content Column */}
                          <div className="flex-1">
-                            {/* Top Row: Order ID and Status */}
                             <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
                                <div>
                                   <div className="flex items-center gap-3 mb-1">
@@ -511,7 +494,6 @@ export function AdminPage() {
                                </div>
                             </div>
 
-                            {/* Customer Info Box */}
                             <div className="bg-black/40 rounded-xl p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div>
                                   <span className="text-white/40 text-xs block mb-1">العميل</span>
@@ -527,10 +509,8 @@ export function AdminPage() {
                                </div>
                             </div>
 
-                            {/* Items List */}
                             <div className="space-y-2 mb-6">
                               {items.map((item, idx) => {
-                                 // Very defensive item rendering
                                  if (!item) return null;
                                  const menuItem = item.menuItem || {};
                                  const itemName = menuItem.name || 'منتج غير معروف';
@@ -560,7 +540,6 @@ export function AdminPage() {
                               })}
                             </div>
 
-                            {/* Action Buttons */}
                             {!isCancelled && (
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <button
@@ -618,7 +597,7 @@ export function AdminPage() {
           </>
         )}
 
-        {/* Menu Content (Safeguarded) */}
+        {/* Menu Content */}
         {activeTab === 'menu' && (
            <>
               <div className="grid grid-cols-3 gap-3 mb-6">
@@ -640,7 +619,6 @@ export function AdminPage() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 mb-6">
                  <button 
                    onClick={() => setShowAddModal(true)}
@@ -659,7 +637,6 @@ export function AdminPage() {
                  )}
               </div>
 
-              {/* Filter - Scrollable on mobile */}
               <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                  <button
                    onClick={() => setSelectedCategory('all')}
@@ -682,7 +659,6 @@ export function AdminPage() {
                  ))}
               </div>
 
-              {/* Products Grid */}
               {loadingProducts ? (
                 <div className="text-center py-12">
                    <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -691,58 +667,59 @@ export function AdminPage() {
               ) : (
               <div className="space-y-3">
                  {filteredProducts.map(product => (
-                    <div key={product.id} className={`bg-white/5 p-3 rounded-xl border flex gap-4 ${
-                       !product.isAvailable ? 'border-red-500/30 opacity-60' : 'border-white/10'
+                    <div key={product.id} className={`bg-white/5 p-3 rounded-xl border flex flex-col transition-all hover:bg-white/10 ${
+                       !product.isAvailable ? 'border-red-500/30 opacity-75' : 'border-white/10'
                     }`}>
-                       <img 
-                         src={product.image} 
-                         alt={product.name}
-                         className="w-20 h-20 rounded-lg object-cover bg-black/50" 
-                         onError={(e) => (e.currentTarget.src = 'https://placehold.co/100?text=Food')}
-                       />
-                       <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                             <div>
-                                <h3 className="text-white font-bold truncate">{product.name}</h3>
-                                <p className="text-white/40 text-sm truncate">{product.description}</p>
-                             </div>
-                             <span className="text-orange-500 font-bold whitespace-nowrap">{product.price} ₪</span>
+                       <div className="flex gap-4">
+                          <img 
+                             src={product.image} 
+                             alt={product.name}
+                             className="w-20 h-20 rounded-lg object-cover bg-black/50 flex-shrink-0" 
+                             onError={(e) => (e.currentTarget.src = 'https://placehold.co/100?text=Food')}
+                          />
+                          <div className="flex-1 min-w-0 flex flex-col justify-start">
+                              <div className="flex justify-between items-start mb-1 gap-2">
+                                 <h3 className="text-white font-bold text-base leading-tight break-words">{product.name}</h3>
+                                 <span className="text-orange-500 font-bold text-sm whitespace-nowrap">{product.price} ₪</span>
+                              </div>
+                              <p className="text-white/60 text-xs line-clamp-2 leading-relaxed">
+                                 {product.description}
+                              </p>
                           </div>
-                          
-                          <div className="flex gap-2 mt-3">
-                             <button
-                               onClick={() => handleToggleAvailability(product)}
-                               className={`flex-1 py-1.5 rounded-lg text-sm font-bold ${
-                                  !product.isAvailable 
-                                    ? 'bg-green-500/20 text-green-400' 
-                                    : 'bg-red-500/20 text-red-400'
-                               }`}
-                             >
-                                {product.isAvailable ? '⛔ تعطيل' : '✅ تفعيل'}
-                             </button>
-                             <button
-                               onClick={() => handleEditProduct(product)}
-                               className="flex-1 py-1.5 rounded-lg text-sm font-bold bg-blue-500/20 text-blue-400"
-                             >
-                                ✏️ تعديل
-                             </button>
-                             <button
-                               onClick={() => handleDeleteProduct(product.id)}
-                               className="px-3 rounded-lg bg-white/10 text-white/60 hover:text-red-400 hover:bg-white/20"
-                             >
-                                🗑️
-                             </button>
-                          </div>
+                       </div>
+                       
+                       <div className="flex gap-2 pt-3 border-t border-white/5 mt-3">
+                          <button
+                             onClick={() => handleToggleAvailability(product)}
+                             className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors ${
+                                !product.isAvailable 
+                                  ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' 
+                                  : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                             }`}
+                          >
+                             {product.isAvailable ? '⛔ تعطيل' : '✅ تفعيل'}
+                          </button>
+                          <button
+                             onClick={() => handleEditProduct(product)}
+                             className="flex-1 py-2 px-2 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 flex items-center justify-center gap-1 transition-colors"
+                          >
+                             ✏️ تعديل
+                          </button>
+                          <button
+                             onClick={() => handleDeleteProduct(product.id)}
+                             className="py-2 px-3 rounded-lg bg-white/5 text-white/40 hover:text-red-400 hover:bg-white/10 transition-colors"
+                          >
+                             🗑️
+                          </button>
                        </div>
                     </div>
                  ))}
               </div>
               )}
 
-              {/* Modal (Add/Edit) */}
               {showAddModal && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                   <div className="bg-zinc-900 w-full max-w-lg rounded-2xl border border-white/10 overflow-hidden">
+                   <div className="bg-zinc-900 w-[95vw] max-w-lg rounded-2xl border border-white/10 overflow-hidden mx-auto">
                       <div className="p-4 border-b border-white/10 flex justify-between items-center">
                          <h2 className="text-xl font-bold text-white">
                             {editingProduct ? 'تعديل الوجبة' : 'إضافة وجبة جديدة'}
@@ -816,11 +793,8 @@ export function AdminPage() {
            </>
         )}
 
-        {/* Settings Content */}
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto space-y-6">
-            
-            {/* Busy Mode Card */}
             <div className={`p-6 rounded-2xl border transition-all ${
               storeSettings.isStoreBusy 
                 ? 'bg-red-500/10 border-red-500/50' 
@@ -853,10 +827,8 @@ export function AdminPage() {
               </div>
             </div>
 
-            {/* General Settings */}
             <div className="bg-zinc-900 rounded-2xl border border-white/10 p-6 space-y-6">
               <h3 className="text-xl font-bold text-white mb-4">إعدادات الطلب</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-white/60 text-sm block mb-2">الحد الأدنى للطلب (شيكل)</label>
@@ -868,7 +840,6 @@ export function AdminPage() {
                   />
                   <p className="text-white/40 text-xs mt-2">لن يتمكن الزبون من الطلب بأقل من هذا المبلغ</p>
                 </div>
-
                 <div>
                   <label className="text-white/60 text-sm block mb-2">رسوم التوصيل (شيكل)</label>
                   <input
@@ -881,7 +852,6 @@ export function AdminPage() {
                 </div>
               </div>
             </div>
-
           </div>
         )}
 
