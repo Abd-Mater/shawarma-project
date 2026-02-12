@@ -24,7 +24,7 @@ export function Header() {
         2. pt-4 -> مسافة إضافية عشان ما يكون لاصق
         3. min-h-[80px] -> ارتفاع محترم للهيدر
       */}
-      <div className="w-full px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] min-h-[90px] flex flex-col justify-center">
+      <div className="w-full px-4 pb-4 pt-[calc(max(env(safe-area-inset-top),20px)+0.5rem)] min-h-[100px] flex flex-col justify-center">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
